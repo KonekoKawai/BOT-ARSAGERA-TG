@@ -1,15 +1,16 @@
-from numpy import delete
-import requests; # Библиотека запросов
-import datetime;
-from datetime import timedelta
-import _strptime
-import time
-from datetime import date
-from datetime import timedelta
-import time
-
 import config_reader
 from config_reader import *
+
+class message:
+    def __init__(self, text):
+        self.text = text
+        self.chat_id = CHANNEL_ID;
+        self.bot_token = config.bot_token.get_secret_value();
+        self.parse_mode='HTML'
+        
+
+    def sendd_message(self):
+        requests.get(f'https://api.telegram.org/bot{self.bot_token}/sendMessage?chat_id={self.chat_id}&text={self.text}&parse_mode={self.parse_mode}');
 
 def reqWorldClock():
     print("Соединение - worldclock");
@@ -27,7 +28,7 @@ def reqWorldClock():
         time_now = reqDate.strftime("%H:%M") #Время
 
         req.close();
-        print("Разорвана связь - worldcloac");
+        print("Разорвана связь - worldclock");
     else:
         print("Что-то пошло не так - worldclock");
         exit();
@@ -57,13 +58,13 @@ def reqArsagera():
 def synCheckClock() -> bool:
     while(True):
         reqWorldClock();
-        if(int(time_now.split(sep=':')[0]) >= 11 and int(time_now.split(sep=':')[0]) < 12): # Время публикации постов Первое значение на 1 час меньше
+        if(int(time_now.split(sep=':')[0]) >= 19 and int(time_now.split(sep=':')[0]) < 20): # Время публикации постов Первое значение на 1 час меньше
             time.sleep(3600-int(time_now.split(sep=':')[1])*60) # Отсчёт до 00 минут 
             return True
         else:
             time.sleep(3500)
 
-async def sendInfoToChannel():
+def sendInfoToChannel():
     global reqDate;
     global date_now;
     global time_now;
@@ -91,11 +92,14 @@ async def sendInfoToChannel():
                 smile = '↘️';
 
             preValueMetrik = valueMetrik;
-            await bot.send_message(CHANNEL_ID, f'💰Биржевые ориентиры <b>Арсагера ФА</b>💰 \n\nСтоимость пая на дату <b>{date_now}</b> — <b><u>{valueMetrik}</u></b> рублей\n\nЦена за пай изменилась на <b>{diffMetrik}%</b>{smile} \n\n#Арсагера_ФА', parse_mode=ParseMode.HTML)
+            mesa = message(f'💰Биржевые ориентиры <b>Арсагера ФА</b>💰 \n\nСтоимость пая на дату <b>{date_now}</b> — <b><u>{round(valueMetrik,0)}</u></b> рублей\n\nЦена за пай изменилась на <b>{diffMetrik}%25</b>{smile}\n\n%23Арсагера') # %23 - заменяет символ # А %25 - %
+            mesa.sendd_message();
             
 
         elif(valueMetrik!=0):
-            await bot.send_message(CHANNEL_ID, f'💰Биржевые ориентиры <b>Арсагера ФА</b>💰 \n\nСтоимость пая на дату <b>{date_now}</b> — <b><u>{valueMetrik}</u></b> рублей \n\n#Арсагера_ФА', parse_mode=ParseMode.HTML)
+            mesa = message(f'💰Биржевые ориентиры <b>Арсагера ФА</b>💰 \n\nСтоимость пая на дату <b>{date_now}</b> — <b><u>{round(valueMetrik,0)}</u></b> рублей\n\n%23Арсагера') # %23 - заменяет символ #
+            print(mesa)
+            mesa.sendd_message();
             preValueMetrik = valueMetrik;
 
         reqDate = reqDate + timedelta(days=1) # Смещаем день на 1 и засыпаем на 24 часа
@@ -103,33 +107,26 @@ async def sendInfoToChannel():
         time.sleep(86440) # засыпаем на 24 часа 
 
 
-@disp.message() #Любая фраза вне контекста бота
-async def any_message(message: Message):
-    await message.delete()
-    
 #--------------------------------------------------------------------
 
-
-
-# Запуск процесса поллинга  новых апдейтов (поиск обновлений от новых задач) // Polling, или опрос, – это процесс, при котором клиентский скрипт периодически отправляет запросы к серверу для проверки наличия новой инфы. 
-async def main():
+def main():
     
     print("Старт программы")
 
     #Тест
-    # global reqDate;
-    # global date_now;
-    # global time_now;
-    # global preValueMetrik;
-    # preValueMetrik = 0;
+    global reqDate;
+    global date_now;
+    global time_now;
+    global preValueMetrik;
+    preValueMetrik = 0;
 
-    # reqDate = datetime.datetime.today();
-    # reqDate = reqDate + timedelta(days=-7) # Смещаем время до МСК ##############################!!!!
-    # date_now = reqDate.strftime("%Y-%m-%d") #Дата
-    # time_now = reqDate.strftime("%H:%M") #Время
+    reqDate = datetime.datetime.today();
+    reqDate = reqDate + timedelta(days=-7) # Смещаем время до МСК ##############################!!!!
+    date_now = reqDate.strftime("%Y-%m-%d") #Дата
+    time_now = reqDate.strftime("%H:%M") #Время
 
-    synCheckClock() # Синхронизация с мировым временем до 12:00
-    await sendInfoToChannel();
+    #synCheckClock() # Синхронизация с мировым временем до 12:00
+    sendInfoToChannel();
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
